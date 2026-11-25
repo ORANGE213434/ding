@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ding Chat</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232f5bff'/%3E%3Cpath d='M7 10a5 5 0 0 1 10 0c0 5 2 6.5 2 6.5H5S7 15 7 10' fill='%23ffcf33'/%3E%3Ccircle cx='12' cy='19' r='1.6' fill='%23ffcf33'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: friendly, quick, a pocket messenger that feels like a shipped product
+   IDEA: a little bell on a cobalt post board: every arrival rings
+   PICTURE: the working chat itself, cobalt rail of conversations beside a bright thread
+   COLOUR and TYPE: cobalt ink rail, white thread, cobalt bubbles, sunflower accent; Outfit + Inter
+   LAYOUT: two panes over 760px, one pane with back button on phones */
+:root{color-scheme:light dark;
+--rail:light-dark(#14204a,#0b112a);--rail2:light-dark(#1d2c63,#151d40);--railink:#eef1ff;--railmute:#a9b3dc;
+--bg:light-dark(#ffffff,#0f1424);--ink:light-dark(#151a2c,#e8ebf5);--mute:light-dark(#646b80,#99a0b8);
+--line:light-dark(#e6e8ef,#252c44);--them:light-dark(#eff1f6,#1e2540);--blue:#2f5bff;--blue2:light-dark(#2448d8,#5a7dff);
+--sun:#ffcf33;--red:#e5484d;--field:light-dark(#f5f6fa,#171d33)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow:hidden}
+h1,h2,h3{font-family:Outfit,Inter,sans-serif;margin:0;line-height:1.1}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.btn{min-height:44px;padding:0 18px;border-radius:12px;border:0;background:var(--blue);color:#fff;font-weight:600;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn:hover{background:var(--blue2)}.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.ghost:hover{background:var(--field)}
+.btn.danger{background:var(--red)}.btn.sm{min-height:36px;padding:0 12px;font-size:14px;border-radius:10px}
+.ib{width:44px;height:44px;border-radius:12px;border:0;background:transparent;display:grid;place-items:center;color:inherit;flex:none}
+.ib:hover{background:color-mix(in srgb,currentColor 12%,transparent)}
+input.f,textarea.f{width:100%;min-height:46px;padding:10px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--field);font-size:16px}
+input.f:focus,textarea.f:focus{border-color:var(--blue);outline:none}
+label.l{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+.note{color:var(--mute);font-size:14px;margin:8px 0}
+.err{color:var(--red);font-size:14px;min-height:20px;margin:8px 0 0}
+.av{width:40px;height:40px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font:600 16px Outfit,sans-serif;flex:none;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.av.sm{width:30px;height:30px;font-size:13px}.av.lg{width:72px;height:72px;font-size:28px}
+.av.grp{border-radius:12px}
+
+/* boot + signup */
+.boot{position:fixed;inset:0;display:grid;place-items:center;background:var(--rail);color:var(--railink);text-align:center;padding:24px}
+.boot p{color:var(--railmute)}
+.signup{position:fixed;inset:0;overflow:auto;background:var(--rail);color:var(--railink);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:clamp(20px,5vw,72px);align-items:center;padding:clamp(24px,5vw,72px)}
+.signup .hero h1{font-size:clamp(40px,6vw,64px);line-height:1.02;text-wrap:balance}
+.signup .hero p{color:var(--railmute);font-size:17px;max-width:46ch}
+.signup svg.art{width:100%;max-width:520px;height:auto;margin-top:24px}
+.card{background:var(--bg);color:var(--ink);border-radius:22px;padding:28px;box-shadow:0 30px 60px -20px rgba(0,0,0,.45)}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.sw{width:36px;height:36px;border-radius:50%;border:3px solid transparent;padding:0}
+.sw[aria-pressed=true]{border-color:var(--ink)}
+.photoRow{display:flex;align-items:center;gap:14px}
+@media(max-width:760px){.signup{grid-template-columns:minmax(0,1fr);align-content:start}.signup svg.art{max-width:300px}}
+
+/* app */
+#app{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);height:100dvh}
+#side{background:var(--rail);color:var(--railink);display:flex;flex-direction:column;height:100dvh}
+.meBar{display:flex;align-items:center;gap:10px;padding:14px 12px 10px 16px}
+.meBar .who{flex:1;line-height:1.2}.meBar .who b{display:block;font-family:Outfit;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meBar .who span{color:var(--railmute);font-size:13px}
+.soundPill{margin:0 16px 8px;min-height:36px;border-radius:999px;border:0;background:var(--sun);color:#1a1400;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px}
+.tabs{display:flex;gap:6px;padding:4px 12px 10px}
+.tabs button{flex:1;min-height:42px;border:0;border-radius:12px;background:transparent;color:var(--railmute);font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
+.tabs button[aria-selected=true]{background:var(--rail2);color:var(--railink)}
+.badge{background:var(--sun);color:#1a1400;border-radius:999px;font-size:12px;font-weight:700;min-width:20px;height:20px;padding:0 6px;display:inline-grid;place-items:center}
+.sideTools{display:flex;gap:8px;padding:0 12px 10px}
+.sideTools input{flex:1;min-height:42px;border-radius:12px;border:0;background:var(--rail2);color:var(--railink);padding:0 14px;font-size:16px}
+.sideTools input::placeholder{color:var(--railmute)}
+.sideTools .btn{background:var(--sun);color:#1a1400;min-height:42px;padding:0 14px}
+#sideBody{flex:1;overflow-y:auto;padding:0 8px 16px}
+.item{width:100%;display:flex;align-items:center;gap:12px;padding:10px;border-radius:14px;border:0;background:transparent;color:inherit;text-align:left}
+.item:hover{background:var(--rail2)}.item.on{background:var(--rail2);box-shadow:inset 3px 0 0 var(--sun)}
+.item .t{flex:1;line-height:1.25}.item .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.item .t span{display:block;color:var(--railmute);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .r{display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-size:12px;color:var(--railmute);flex:none}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--sun)}
+.item.unread .t b{color:#fff}.item.unread .t span{color:var(--railink)}
+.sec{font:600 13px Inter;color:var(--railmute);padding:14px 10px 6px;display:flex;justify-content:space-between}
+.frow{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:14px}
+.frow .t{flex:1;line-height:1.25}.frow .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow .t span{color:var(--railmute);font-size:13px}
+.frow .facts{display:flex;gap:6px;flex:none}
+.pbtn{min-height:36px;padding:0 12px;border-radius:10px;border:0;background:var(--sun);color:#1a1400;font-weight:600;font-size:14px}
+.pbtn.alt{background:var(--rail2);color:var(--railink)}
+.pbtn:disabled{opacity:.6;cursor:default}
+.emptyS{color:var(--railmute);font-size:14px;padding:6px 10px 10px}
+
+#main{display:flex;flex-direction:column;height:100dvh;background:var(--bg)}
+.welcome{flex:1;display:grid;place-items:center;text-align:center;padding:24px;color:var(--mute)}
+.welcome h2{color:var(--ink);font-size:30px;margin:16px 0 8px}
+.chatHead{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);min-height:66px}
+.chatHead .t{flex:1;line-height:1.2}.chatHead .t b{display:block;font-family:Outfit;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chatHead .t span{font-size:13px;color:var(--mute)}
+.back{display:none}
+#msgs{flex:1;overflow-y:auto;padding:16px clamp(12px,3vw,32px) 8px;display:flex;flex-direction:column;gap:2px}
+.day{align-self:center;font-size:12px;color:var(--mute);background:var(--field);border-radius:999px;padding:3px 12px;margin:14px 0 8px}
+.sys{align-self:center;font-size:13px;color:var(--mute);margin:8px 0;text-align:center;max-width:80%}
+.row{display:flex;align-items:flex-end;gap:8px;margin-top:10px;max-width:100%}
+.row.cont{margin-top:2px}
+.row.mine{flex-direction:row-reverse}
+.avsp{width:30px;flex:none}
+.col{display:flex;flex-direction:column;max-width:min(560px,78%);align-items:flex-start}
+.row.mine .col{align-items:flex-end}
+.who{font-size:12px;color:var(--mute);margin:0 0 3px 10px;font-weight:600}
+.bub{background:var(--them);border-radius:18px;padding:8px 12px 6px;position:relative;max-width:100%;transition:box-shadow .3s}
+.row.mine .bub{background:var(--blue);color:#fff}
+.row.flash .bub{box-shadow:0 0 0 3px var(--sun)}
+.txt{white-space:pre-wrap;overflow-wrap:anywhere}
+.meta{display:block;font-size:11px;opacity:.65;text-align:right;margin-top:2px}
+.pic{display:block;max-width:100%;width:320px;height:auto;border-radius:12px;margin:2px -4px 4px;cursor:zoom-in;background:color-mix(in srgb,currentColor 10%,transparent)}
+.quote{display:block;width:100%;text-align:left;border:0;border-left:3px solid var(--sun);background:color-mix(in srgb,currentColor 9%,transparent);border-radius:8px;padding:4px 8px;margin:2px 0 6px;color:inherit;font-size:13px}
+.quote b{display:block;font-size:12px}.quote span{display:block;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.del{opacity:.7}
+.col{position:relative}.acts{position:absolute;top:-36px;left:0;z-index:3;display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--bg);box-shadow:0 4px 14px rgba(0,0,0,.18);opacity:0;pointer-events:none;transition:opacity .12s;white-space:nowrap}.row.mine .acts{left:auto;right:0}
+.row:hover .acts,.row.show .acts,.row:focus-within .acts{opacity:1;pointer-events:auto}
+.acts button{border:0;background:var(--field);color:var(--ink);border-radius:999px;min-height:30px;padding:0 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px}
+.acts button:hover{background:var(--line)}
+.replyBar{display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid var(--line);background:var(--field);font-size:14px}
+.replyBar .t{flex:1;border-left:3px solid var(--sun);padding-left:10px;line-height:1.3}
+.replyBar .t span{display:block;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.composer{display:flex;align-items:flex-end;gap:6px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.composer textarea{flex:1;resize:none;max-height:140px;min-height:44px;padding:10px 14px;border-radius:22px;border:1.5px solid var(--line);background:var(--field);font-size:16px;line-height:1.4}
+.composer textarea:focus{outline:none;border-color:var(--blue)}
+.composer .send{width:44px;height:44px;border-radius:50%;border:0;background:var(--blue);color:#fff;display:grid;place-items:center;flex:none}
+.composer .ib{color:var(--blue)}
+.locked{padding:14px;text-align:center;color:var(--mute);border-top:1px solid var(--line);font-size:14px}
+.drop{outline:3px dashed var(--blue);outline-offset:-10px}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(8,12,30,.55);display:grid;place-items:center;padding:16px;z-index:20}
+.sheet{background:var(--bg);color:var(--ink);border-radius:20px;width:min(460px,100%);max-height:92dvh;overflow:auto;padding:22px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+.sheet h2{font-size:24px;margin-bottom:6px}
+.sheet .foot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.mrow{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.mrow .t{flex:1;line-height:1.25}.mrow .t span{display:block;font-size:13px;color:var(--mute)}
+.tag{font-size:11px;font-weight:700;background:var(--sun);color:#1a1400;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+.chk{display:flex;align-items:center;gap:12px;padding:8px 4px;border-radius:12px;cursor:pointer}
+.chk:hover{background:var(--field)}.chk input{width:20px;height:20px;accent-color:var(--blue)}
+.inline{display:flex;gap:8px}
+.lightbox img{max-width:100%;max-height:70dvh;display:block;margin:0 auto;border-radius:12px}
+
+/* editor */
+#editor{padding:0;place-items:stretch}
+.edWrap{background:#0b0f1f;color:#eef1ff;display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100dvh;width:100%}
+.edTop{display:flex;align-items:center;gap:4px;padding:8px 10px;flex-wrap:wrap;border-bottom:1px solid #222a4a}
+.edTop .ib[aria-pressed=true]{background:var(--blue)}
+.edTop .sep{width:1px;height:28px;background:#2a3358;margin:0 4px}
+.edTop .sp{flex:1}
+.edStage{position:relative;display:grid;place-items:center;overflow:hidden;padding:12px;touch-action:none}
+.edStage canvas{max-width:100%;max-height:100%;display:block;touch-action:none;box-shadow:0 0 0 1px #2a3358}
+#cropBox{position:absolute;border:2px dashed var(--sun);background:rgba(255,207,51,.12);pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.45)}
+#edText{position:absolute;min-width:160px;min-height:40px;font-size:16px;border-radius:8px;border:2px solid var(--sun);background:rgba(0,0,0,.6);color:#fff;padding:4px 8px}
+.edBottom{display:flex;gap:16px;align-items:center;padding:10px 14px calc(10px + env(safe-area-inset-bottom));flex-wrap:wrap;border-top:1px solid #222a4a}
+.edBottom label{display:flex;flex-direction:column;font-size:12px;color:#a9b3dc;gap:2px}
+.edBottom input[type=range]{width:110px;accent-color:var(--sun)}
+.edBottom .sw{width:28px;height:28px}
+.edBottom .sw[aria-pressed=true]{border-color:#fff}
+.edHint{font-size:13px;color:#a9b3dc}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#151a2c;color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;z-index:40;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:90vw}
+
+@media(max-width:760px){
+#app{grid-template-columns:minmax(0,1fr)}
+#main{display:none}
+body.in-chat #side{display:none}body.in-chat #main{display:flex}
+.back{display:grid}
+.col{max-width:85%}
+.edBottom input[type=range]{width:80px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.authTabs{display:flex;gap:6px;background:var(--field);border-radius:14px;padding:4px;margin:4px 0 6px}
+.authTabs button{flex:1;min-height:42px;border:0;border-radius:11px;background:transparent;font-weight:600;color:var(--mute)}
+.authTabs button[aria-selected=true]{background:var(--bg);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.older{align-self:center;border:0;background:var(--field);color:var(--ink);border-radius:999px;min-height:36px;padding:0 16px;font-size:13px;font-weight:600;margin:4px 0 8px}
+.pwBox{margin-top:18px;border-top:1px solid var(--line);padding-top:6px}
+.vb{display:inline-block;vertical-align:-3px;margin-left:4px;flex:none}
+.frow .t.plain{border:0;background:none;padding:0;text-align:left;color:inherit;cursor:pointer;font:inherit}
+.frow .t.plain:hover b{text-decoration:underline}
+.tag.vt{background:#2f8cff;color:#fff}
+.rt{display:inline-block;font:700 10px Inter,sans-serif;letter-spacing:.02em;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+.rt-owner{background:#ffcf33;color:#1a1400}.rt-senior{background:#e5484d;color:#fff}.rt-mod{background:#30a46c;color:#fff}
+.mtabs{display:flex;gap:6px;margin:12px 0}.mtabs button{flex:1;min-height:40px;border-radius:10px;border:1.5px solid var(--line);background:transparent;font-weight:600;font-size:14px}
+.mtabs button[aria-selected=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+.rcard{border:1.5px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.rcard .top{display:flex;align-items:center;gap:10px}.rcard .top b{flex:1}
+.rcard .meta2{font-size:13px;color:var(--mute);margin:6px 0}
+.rcard .qt{border-left:3px solid var(--sun);background:var(--field);border-radius:8px;padding:6px 10px;font-size:14px;margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.rcard .qt img{max-width:160px;border-radius:8px;display:block}
+.rcard .row2{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pill{font-size:11px;font-weight:700;border-radius:6px;padding:2px 6px;background:var(--red);color:#fff}
+.modSec h3{font-size:17px;margin:4px 0 8px}
+.modSec .grid{display:grid;grid-template-columns:minmax(0,90px) minmax(0,1fr);gap:8px}
+.modSec select,.rep select{width:100%;min-height:46px;border-radius:12px;border:1.5px solid var(--line);background:var(--field);padding:0 10px;font-size:16px}
+.wlist{font-size:13px;color:var(--mute);margin:4px 0 8px;padding-left:18px}
+.warnBox{border-left:4px solid var(--sun);background:var(--field);border-radius:10px;padding:10px 12px;margin:8px 0}
+.sheet.wide{width:min(660px,100%)}
+.pickList{max-height:260px;overflow:auto;border:1.5px solid var(--line);border-radius:12px;padding:4px}
+.pick{display:flex;gap:10px;align-items:flex-start;padding:8px;border-radius:10px;cursor:pointer}.pick:hover{background:var(--field)}
+.pick input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--blue)}
+.pick img{max-width:96px;max-height:72px;border-radius:6px;display:block;margin-bottom:4px}
+.pick .pt{display:block;overflow-wrap:anywhere;font-size:14px}.pick .pm{display:block;font-size:12px;color:var(--mute)}
+.ev{border-left:3px solid var(--sun);background:var(--field);border-radius:8px;padding:6px 10px;font-size:14px;margin:6px 0}
+.ev img{max-width:180px;max-height:140px;border-radius:8px;display:block;margin-bottom:4px;cursor:zoom-in}
+.ev .t2{white-space:pre-wrap;overflow-wrap:anywhere}.ev .m2{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--mute);margin-top:4px;flex-wrap:wrap}
+.mcList{border:1.5px solid var(--line);border-radius:12px;padding:6px;max-height:58dvh;overflow:auto}
+.mcm{display:flex;gap:10px;padding:8px;border-radius:10px}.mcm.hl{background:color-mix(in srgb,var(--sun) 26%,transparent);box-shadow:inset 3px 0 0 var(--sun)}
+.mcm .b{flex:1}.mcm .h{font-size:13px;color:var(--mute)}.mcm .h b{color:var(--ink)}
+.mcm .tx{white-space:pre-wrap;overflow-wrap:anywhere}.mcm img{max-width:240px;max-height:200px;border-radius:8px;display:block;margin-top:4px}
+.mcm.del .tx,.mcm.del img{opacity:.7}.mcsys{text-align:center;font-size:12px;color:var(--mute);padding:4px}
+.offline{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:var(--sun);color:#1a1400;font-weight:600;font-size:13px;padding:6px 14px;border-radius:999px;z-index:30}
+</style>
+</head>
+<body>
+
+<div id="boot" class="boot"><div><h1 style="font-size:40px">Ding</h1><p id="bootMsg">Opening your chats…</p></div></div>
+
+<div id="bannedScr" class="boot hidden"><div style="max-width:440px">
+  <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#ffcf33" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+  <h1 style="font-size:34px;margin:14px 0 8px">You’re banned</h1><p id="banText"></p><p id="banReason" style="color:var(--railink)"></p>
+  <button class="btn" id="banLogout" style="margin-top:10px;background:var(--sun);color:#1a1400">Log out</button></div></div>
+
+<div id="auth" class="signup hidden">
+  <div class="hero">
+    <h1>Chat with your friends. Hear the ding.</h1>
+    <p>Sign up with your email, add friends by username, start group chats and share photos you can mark up before sending.</p>
+    <svg class="art" viewBox="0 0 520 300" aria-hidden="true">
+      <defs><linearGradient id="g1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#5a7dff"/><stop offset="1" stop-color="#2f5bff"/></linearGradient>
+      <linearGradient id="g2" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffe17a"/><stop offset="1" stop-color="#ffcf33"/></linearGradient></defs>
+      <ellipse cx="260" cy="282" rx="210" ry="12" fill="#000" opacity=".25"/>
+      <rect x="20" y="40" width="250" height="92" rx="30" fill="#fff"/><path d="M58 128l-14 30 40-26z" fill="#fff"/>
+      <rect x="44" y="66" width="150" height="14" rx="7" fill="#d9def0"/><rect x="44" y="92" width="96" height="14" rx="7" fill="#d9def0"/>
+      <rect x="230" y="150" width="270" height="100" rx="30" fill="url(#g1)"/><path d="M462 246l18 30-46-28z" fill="#2f5bff"/>
+      <rect x="256" y="178" width="170" height="14" rx="7" fill="#fff" opacity=".75"/><rect x="256" y="204" width="110" height="14" rx="7" fill="#fff" opacity=".75"/>
+      <g transform="translate(400 30)"><path d="M40 8c-18 0-30 14-30 32v22l-10 14h80l-10-14V40c0-18-12-32-30-32z" fill="url(#g2)"/><path d="M40 8c-6 0-10 2-14 6 10-2 22 4 24 16V62l8 14h22l-10-14V40c0-18-12-32-30-32z" fill="#e8b500" opacity=".5"/><circle cx="40" cy="84" r="9" fill="#ffcf33"/><path d="M96 20q12 18 0 40M108 10q20 30 0 60M-16 20q-12 18 0 40" stroke="#ffcf33" stroke-width="5" fill="none" stroke-linecap="round"/></g>
+    </svg>
+  </div>
+  <div class="card">
+    <div class="authTabs" role="tablist"><button type="button" role="tab" id="tabLogin" aria-selected="true">Log in</button><button type="button" role="tab" id="tabSignup" aria-selected="false">Sign up</button></div>
+    <form id="loginForm" autocomplete="on">
+      <h2 style="font-size:28px;margin-top:12px">Welcome back</h2>
+      <label class="l" for="liLogin">Email or username</label>
+      <input class="f" id="liLogin" name="username" autocomplete="username" required autocapitalize="none" spellcheck="false">
+      <label class="l" for="liPass">Password</label>
+      <input class="f" id="liPass" type="password" name="password" autocomplete="current-password" required>
+      <p class="err" id="liErr"></p>
+      <button class="btn" style="width:100%" id="liBtn">Log in</button>
+      <p class="note" style="text-align:center">New here? <a href="#" id="toSignup">Create an account</a></p>
+    </form>
+    <form id="signupForm" class="hidden" autocomplete="on">
+      <h2 style="font-size:28px;margin-top:12px">Create your account</h2>
+      <label class="l" for="suName">Display name</label>
+      <input class="f" id="suName" maxlength="30" required placeholder="Sam Rivers" autocomplete="name">
+      <label class="l" for="suUser">Username</label>
+      <input class="f" id="suUser" maxlength="20" required placeholder="sam_rivers" autocapitalize="none" spellcheck="false" autocomplete="username">
+      <p class="note" style="margin-top:4px">3–20 letters, numbers or underscores. Friends find you by this.</p>
+      <label class="l" for="suEmail">Email</label>
+      <input class="f" id="suEmail" type="email" required placeholder="sam@example.com" autocomplete="email">
+      <label class="l" for="suPass">Password</label>
+      <input class="f" id="suPass" type="password" minlength="8" required autocomplete="new-password">
+      <p class="note" style="margin-top:4px">At least 8 characters.</p>
+      <label class="l">Colour</label>
+      <div class="swatches" id="suColors"></div>
+      <label class="l">Profile photo (optional)</label>
+      <div class="photoRow"><span id="suPrev"></span><label class="btn ghost sm" for="suPhoto">Choose photo</label><input type="file" id="suPhoto" accept="image/*" class="hidden"></div>
+      <p class="err" id="suErr"></p>
+      <button class="btn" style="width:100%;margin-top:6px" id="suBtn">Create account</button>
+    </form>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <aside id="side">
+    <div class="meBar"><span id="meAv"></span><div class="who"><b id="meName"></b><span id="meUser"></span></div>
+      <button class="ib hidden" id="modBtn" aria-label="Moderation" style="position:relative" data-ic="shield"><span class="badge hidden" id="modBadge" style="position:absolute;top:2px;right:0;min-width:18px;height:18px;font-size:11px"></span></button>
+      <button class="ib" id="settingsBtn" aria-label="Account settings" data-ic="gear"></button></div>
+    <button class="soundPill hidden" id="soundPill"><span data-ic="bell"></span>Tap to turn on message sounds</button>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="chats" aria-selected="true">Chats <span class="badge hidden" id="chatBadge"></span></button>
+      <button role="tab" data-tab="friends" aria-selected="false">Friends <span class="badge hidden" id="reqBadge"></span></button>
+    </div>
+    <div class="sideTools"><input id="sideSearch" placeholder="Search chats" aria-label="Search"><button class="btn" id="newGroupBtn"><span data-ic="plus"></span>Group</button></div>
+    <div id="sideBody"></div>
+  </aside>
+  <main id="main">
+    <div class="welcome" id="welcome"><div>
+      <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      <h2>Pick a chat</h2><p>Choose a conversation, or add friends from the Friends tab to get started.</p></div></div>
+    <div id="chat" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0">
+      <div class="chatHead"><button class="ib back" id="backBtn" aria-label="Back to chats" data-ic="back"></button><span id="chAv"></span><div class="t"><b id="chName"></b><span id="chSub"></span></div><button class="ib" id="infoBtn" aria-label="Chat info" data-ic="info"></button></div>
+      <div id="msgs" aria-live="polite"></div>
+      <div class="replyBar hidden" id="replyBar"></div>
+      <form class="composer" id="composer">
+        <button type="button" class="ib" id="attachBtn" aria-label="Send a photo" data-ic="image"></button>
+        <input type="file" id="fileIn" accept="image/*" class="hidden">
+        <textarea id="msgIn" rows="1" placeholder="Message" aria-label="Message"></textarea>
+        <button class="send" aria-label="Send" data-ic="send"></button>
+      </form>
+      <div class="locked hidden" id="locked"></div>
+    </div>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<div id="editor" class="modal hidden"><div class="edWrap">
+  <div class="edTop">
+    <button class="ib" id="edCancel" aria-label="Cancel" data-ic="x"></button>
+    <button class="ib" id="edUndo" aria-label="Undo" data-ic="undo"></button>
+    <span class="sep"></span>
+    <button class="ib" data-mode="draw" aria-label="Draw" data-ic="pen"></button>
+    <button class="ib" data-mode="text" aria-label="Add text" data-ic="type"></button>
+    <button class="ib" data-mode="crop" aria-label="Crop" data-ic="crop"></button>
+    <button class="ib" id="edRotL" aria-label="Rotate left" data-ic="rotl"></button>
+    <button class="ib" id="edRotR" aria-label="Rotate right" data-ic="rotr"></button>
+    <button class="ib" id="edFlip" aria-label="Flip" data-ic="flip"></button>
+    <span class="sp"></span>
+    <button class="btn sm hidden" id="edCropOk" style="background:var(--sun);color:#1a1400">Apply crop</button>
+    <button class="btn sm" id="edDone">Send</button>
+  </div>
+  <div class="edStage" id="edStage"><canvas id="edCv"></canvas><div id="cropBox" class="hidden"></div><input id="edText" class="hidden" placeholder="Type, then Enter"></div>
+  <div class="edBottom">
+    <div class="swatches" id="edColors"></div>
+    <label>Brush / text size<input type="range" id="edSize" min="2" max="40" value="8"></label>
+    <label>Brightness<input type="range" id="fB" min="40" max="160" value="100"></label>
+    <label>Contrast<input type="range" id="fC" min="40" max="160" value="100"></label>
+    <label>Saturation<input type="range" id="fS" min="0" max="200" value="100"></label>
+    <label>Black &amp; white<input type="range" id="fG" min="0" max="100" value="0"></label>
+    <button class="btn ghost sm" id="edReset" style="color:#eef1ff;border-color:#2a3358">Reset adjustments</button>
+    <span class="edHint" id="edHint"></span>
+  </div>
+</div></div>
+
+<div id="toast" class="toast hidden" role="status"></div>
+<div id="offline" class="offline hidden">Reconnecting…</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
